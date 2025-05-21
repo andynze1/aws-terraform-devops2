@@ -12,7 +12,6 @@ This Terraform project provisions a complete AWS infrastructure stack including:
 - 🌐 **VPC, subnets, and security groups**
 - 🧪 **Sample apps (NGINX, Echo Server)**
 
-
 ---
 
 ## 📦 Components
@@ -56,8 +55,6 @@ This Terraform project provisions a complete AWS infrastructure stack including:
 
 ---
 
----
-
 ## ☸️ Kubernetes Cluster with EKS
 
 Provisioned using:
@@ -65,153 +62,146 @@ Provisioned using:
 - `eks-securitygroups.tf`
 - `update-kubeconfig.tf`
 
-Features:
-- Node groups
-- Security groups
-- IAM roles for service accounts (IRSA)
-- `context-k8s.sh` script to configure `kubectl`
+**Features:**
+- Managed node groups
+- Custom security groups
+- IRSA for Kubernetes pods
+- `context-k8s.sh` to automatically update kubeconfig
 
 ---
 
 ## ⚙️ Jenkins VM Setup
 
-Jenkins is installed on a provisioned EC2 instance using Terraform + shell automation.
+Jenkins is installed on an EC2 instance provisioned via Terraform and bootstrapped using shell scripts.
 
 ### Files:
-- `main.tf`, `variables.tf`, `outputs.tf` – Define the VM infrastructure (AMIs, security groups, etc.)
-- `install.sh` – Automates Jenkins setup (Ubuntu/Debian-based)
-- `install-redhat.sh` – Jenkins setup for RHEL/CentOS
+- `main.tf`, `variables.tf`, `outputs.tf`: Define EC2 instance, security groups, EBS volume, key pairs.
+- `install.sh`: Jenkins setup for Ubuntu/Debian-based systems.
+- `install-redhat.sh`: Jenkins setup for RHEL-based systems.
 
-### VM Features:
-- Auto-installs Java, Jenkins, Docker, AWS CLI, kubectl, eksctl, helm, and monitoring tools.
-- Installs Trivy, Snyk, ArgoCD CLI (customizable).
-- Adds Jenkins and system users to the Docker group.
+### Features:
+- Installs Jenkins, Docker, Java, AWS CLI, kubectl, eksctl, helm, Trivy, and Snyk.
+- Adds necessary users to the Docker group.
 
-### Access Jenkins:
-Once applied, Jenkins will be accessible via the EC2 public IP or a custom Route 53 DNS record.
+### Access:
+- Jenkins UI available via public IP or Route 53 DNS.
+- Credentials: admin (set during setup)
+- To retrieve Nexus admin password:
+  ```bash
+  docker exec nexus cat /nexus-data/admin.password
 
----
+📊 Monitoring Stack
 
-## 🚀 GitOps with ArgoCD
+Includes:
+	•	Prometheus: Cluster metrics and scraping configuration.
+	•	Grafana: Dashboards with sidecar-enabled dynamic loading.
+	•	Uses:
+	•	grafana-values.yaml
+	•	grafana-dashboard.yaml
+	•	Storage class via prometheus-stoageclass.yaml
 
-- Provisioned in the `argocd` namespace
-- Helm chart deployed via `k8s-argocd.tf`
-- Uses ingress (ALB) with Route 53 DNS support
+Access Grafana via ingress and authenticate with the credentials defined in the values file.
 
----
+⸻
 
-## 📊 Monitoring Stack
+🧪 Sample Applications
 
-- **Prometheus** (`k8s-prometheus.tf`)
-- **Grafana** (`k8s-grafana.tf`)
-- Uses:
-  - `grafana-values.yaml`
-  - `grafana-dashboard.yaml`
-  - `prometheus-stoageclass.yaml`
-- Dashboards are auto-loaded using config maps and labels.
+Echoserver
+	•	K8s service with ALB ingress
+	•	Accessible at: echo.devopsbyexample.io
 
----
+NGINX
+	•	4 replica deployment with ClusterIP service
 
-## 🧪 Sample Applications
+⸻
 
-### Echoserver
-- Kubernetes service & ingress (`echoserver.yaml`)
-- Exposed via ALB at `echo.devopsbyexample.io`
+🌐 Networking & DNS
+	•	VPC, subnets, and route tables defined via network-module.
+	•	DNS entries for ArgoCD, Jenkins, and Grafana created in route-53-dns-records.tf.
 
-### NGINX
-- Simple deployment with 4 replicas (`nginx.yaml`)
+⸻
 
----
+📦 Storage
+	•	storage-class.yaml and prometheus-stoageclass.yaml define gp2 storage classes.
+	•	Separate classes for monitoring workloads and general use.
 
-## 🌐 Networking & DNS
+⸻
 
-### VPC & Subnets
-- Managed in `network/` and `aws-data-sources.tf`
-- Supports custom subnet lookups and route tables
+🔐 IAM & Autoscaling
+	•	IAM roles defined in:
+	•	iam-roles.tf: For EKS nodes and workloads.
+	•	iam-autoscaler.tf: Cluster Autoscaler support.
 
-### Route 53
-- DNS records for applications & Jenkins (`route-53-dns-records.tf`)
-
----
-
-## 📦 Storage
-
-- `storage-class.yaml`, `prometheus-stoageclass.yaml`
-- AWS EBS-based `gp2` and custom dynamic provisioning
-- Separate classes for Prometheus, Grafana
-
----
-
-## 🔐 IAM & Autoscaling
-
-- `iam-roles.tf`, `iam-autoscaler.tf`
-- Includes:
-  - IAM roles for EKS and workloads
-  - Role for Cluster Autoscaler
-
----
-
-## 🚀 Deployment Steps
-
-1. **Initialize Terraform**
-   ```bash
-   terraform init
-
-
-2.	**Plan the Infrastructure**
+**🚀 Deployment Steps**
+1.	Initialize Terraform
     ```bash
-    terraform plan -out=tfplan
+    terraform init
 
-3.	**Apply the Plan**
-   ```bash
-    terraform apply tfplan
-
-4.	**Configure kubectl**
+2. Plan the Infrastructure
     ```bash
-    bash context-k8s.sh
+terraform plan -out=tfplan
 
-5.	**🧼 Cleanup**
+3. Apply the Plan
     ```bash
-    terraform destroy
----
+terraform apply tfplan
 
-########
-**Access ArgoCD & Grafana**
-	•	ArgoCD: Login via ALB/Route 53 DNS.
-	•	Grafana: Dashboard exposed via ingress with basic authentication (see grafana-values.yaml).
+4. Configure kubectl
+    ```bash
+bash context-k8s.sh
 
-**🔐 State Management**
+5. Destroy Infrastructure (if needed)
+    ```bash
+terraform destroy
 
-Terraform uses remote backend:
-	•	S3 for state file
-	•	DynamoDB for locking
-
-Check s3-backend.tf for configuration.
+6. Access Jenkins & Grafana
+Jenkins: Use EC2 public IP or Route 53
+Grafana: Via ALB ingress
 
 
-**📤 Outputs**
+🔐 Remote State Management
 
-Post-deployment outputs include:
-	•	EKS cluster name and kubeconfig details
-	•	ArgoCD and Grafana endpoints (if Route 53 is used)
-	•	IAM roles and role ARNs
+Terraform state is managed remotely using:
+	•	S3 bucket for storing state files
+	•	DynamoDB for state locking
+
+Configuration: s3-backend.tf
+
+⸻
+
+📤 Outputs
+
+Post-deployment, the following outputs are available:
+	•	EKS cluster name and kubeconfig setup
+	•	ArgoCD, Jenkins, and Grafana URLs
+	•	IAM role ARNs and resource IDs
+
 
 **📁 Directory Structure**
-├── modules
-    ├── eks-module/                        # EKS cluster & node groups
-        ├── k8s/                        # Kubernetes deployments (ArgoCD, monitoring, storage)
-    ├── network-module/                    # VPC, subnets, DNS
-    ├── vm-module/                    # EC2 VM and Jenkins setup
-├── main.tf/                    # Bash scripts (kubectl config, Jenkins install)
-├── outputs.tf/                 # Example applications (nginx, echoserver)
+├── modules/
+│   ├── eks-module/             # EKS cluster & node groups
+│   ├── network-module/         # VPC, subnets, DNS
+│   ├── vm-module/              # Jenkins EC2 and installation
+│
+├── k8s/                        # Kubernetes manifests (monitoring, GitOps)
+├── workloads/                 # Sample apps (nginx, echo server)
+├── scripts/                   # Bash scripts for setup
+├── main.tf
+├── outputs.tf
 ├── provider.tf
-├── README.md
-├── s3-backend.tf
 ├── variables.tf
+├── s3-backend.tf
+├── terraform.tfvars
+├── vpc.auto.tfvars
+└── README.md
 
 
 
 Terraform VPC and EC2 Module for Workspaces Prod and Stage Environment. With Statefile stored securely in AWS S3. 
+
+🚀 GitOps with ArgoCD
+	•	Deployed to argocd namespace.
+	•	Accessible via ALB/Ingress configured in k8s-argocd.tf.
+	•	Port-forward locally:
 
 To access Nexus Password: docker exec nexus cat /nexus-data/admin.password
 nohup kubectl port-forward service/argo-cd-argocd-server -n argocd 8080:443 > argo-portforward.log 2>&1 &
