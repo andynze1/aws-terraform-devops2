@@ -173,7 +173,7 @@ Once applied, Jenkins will be accessible via the EC2 public IP or a custom Route
 5.	To destroy everything:
     ```bash
     terraform destroy
-
+---
 
 ########
 Access ArgoCD & Grafana
