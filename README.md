@@ -166,11 +166,11 @@ Once applied, Jenkins will be accessible via the EC2 public IP or a custom Route
    ```bash
     terraform apply tfplan
 
-4. Configure kubectl
+4.	Configure kubectl
     ```bash
     bash context-k8s.sh
 
-5.	Access ArgoCD & Grafana
+5.Access ArgoCD & Grafana
 	•	ArgoCD: Login via ALB/Route 53 DNS.
 	•	Grafana: Dashboard exposed via ingress with basic authentication (see grafana-values.yaml).
 
@@ -184,7 +184,7 @@ Check s3-backend.tf for configuration.
 
 🧼 Cleanup
 
-To destroy everything:
+6.	To destroy everything:
     ```bash
     terraform destroy
 
