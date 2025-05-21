@@ -158,29 +158,29 @@ Once applied, Jenkins will be accessible via the EC2 public IP or a custom Route
    terraform init
 
 
-2.	Plan the Infrastructure
+2.	**Plan the Infrastructure**
     ```bash
     terraform plan -out=tfplan
 
-3.	Apply the Plan
+3.	**Apply the Plan**
    ```bash
     terraform apply tfplan
 
-4.	Configure kubectl
+4.	**Configure kubectl**
     ```bash
     bash context-k8s.sh
 
-5.	To destroy everything:
+5.	**🧼 Cleanup**
     ```bash
     terraform destroy
 ---
 
 ########
-Access ArgoCD & Grafana
+**Access ArgoCD & Grafana**
 	•	ArgoCD: Login via ALB/Route 53 DNS.
 	•	Grafana: Dashboard exposed via ingress with basic authentication (see grafana-values.yaml).
 
-🔐 State Management
+**🔐 State Management**
 
 Terraform uses remote backend:
 	•	S3 for state file
@@ -188,18 +188,27 @@ Terraform uses remote backend:
 
 Check s3-backend.tf for configuration.
 
-🧼 Cleanup
 
-
-
-📤 Outputs
+**📤 Outputs**
 
 Post-deployment outputs include:
 	•	EKS cluster name and kubeconfig details
 	•	ArgoCD and Grafana endpoints (if Route 53 is used)
 	•	IAM roles and role ARNs
 
-📁 Directory Structure
+**📁 Directory Structure**
+├── modules
+    ├── eks-module/                        # EKS cluster & node groups
+        ├── k8s/                        # Kubernetes deployments (ArgoCD, monitoring, storage)
+    ├── network-module/                    # VPC, subnets, DNS
+    ├── vm-module/                    # EC2 VM and Jenkins setup
+├── main.tf/                    # Bash scripts (kubectl config, Jenkins install)
+├── outputs.tf/                 # Example applications (nginx, echoserver)
+├── provider.tf
+├── README.md
+├── s3-backend.tf
+├── variables.tf
+
 
 
 Terraform VPC and EC2 Module for Workspaces Prod and Stage Environment. With Statefile stored securely in AWS S3. 
