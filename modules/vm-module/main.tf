@@ -10,7 +10,7 @@ resource "aws_instance" "build-server" {
     Name = "jenkins-server"
   }
   root_block_device {
-    volume_size           = 40
+    volume_size           = 15
     volume_type           = "gp2"
     delete_on_termination = true
   }

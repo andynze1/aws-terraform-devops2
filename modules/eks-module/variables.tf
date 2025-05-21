@@ -31,9 +31,9 @@ variable "private_subnet_ids" {
 
 }
 
-variable "security_group_id" {
-  description = "Security group ID for EKS"
-  type        = string
+variable "security_group_ids" {
+  description = "List of security group IDs for EKS"
+  type        = list(string)
   default = "module.network-module.security_group_id"
 }
 

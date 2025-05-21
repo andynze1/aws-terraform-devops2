@@ -12,7 +12,7 @@ module "eks" {
 
   eks_managed_node_group_defaults = {
     ami_type  = "AL2_x86_64"
-    disk_size = 30
+    disk_size = 10
   }
   
   enable_irsa = true
@@ -21,12 +21,12 @@ module "eks" {
     public_nodes = {
       name               = "public-node-group"
       instance_types     = ["m5.large"]
-      desired_size       = 3
-      min_size           = 2
-      max_size           = 5
+      desired_size       = 2
+      min_size           = 1
+      max_size           = 3
       capacity_type      = "ON_DEMAND"
       subnet_ids         = var.public_subnet_ids
-      security_group_ids = [var.security_group_id]
+      security_group_ids = var.security_group_ids
       key_name           = "eks-terraform-key"
       iam_role_arn       = aws_iam_role.eks_nodes.arn
       labels = {

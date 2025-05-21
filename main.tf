@@ -42,7 +42,7 @@ module "eks-module" {
   node_group_max_size     = var.node_group_max_size
   eks_managed_node_group_defaults = {
     ami_type     = "AL2_x86_64"                         # Default Amazon Linux 2 AMI
-    disk_size    = 30                                   # Default disk size (GB)
+    disk_size    = 10                                   # Default disk size (GB)
     iam_role_arn = module.eks-module.eks_nodes_role_arn # The IAM role ARN for the node group
   }
   # providers = {
