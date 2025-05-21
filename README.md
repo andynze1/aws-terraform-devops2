@@ -137,21 +137,21 @@ NGINX
     ```bash
     terraform init
 
-2. Plan the Infrastructure
+2.	Plan the Infrastructure
     ```bash
-terraform plan -out=tfplan
+    terraform plan -out=tfplan
 
-3. Apply the Plan
+3.	Apply the Plan
     ```bash
-terraform apply tfplan
+    terraform apply tfplan
 
-4. Configure kubectl
+4.	Configure kubectl
     ```bash
-bash context-k8s.sh
+    bash context-k8s.sh
 
-5. Destroy Infrastructure (if needed)
+5.	Destroy Infrastructure (if needed)
     ```bash
-terraform destroy
+    terraform destroy
 
 6. Access Jenkins & Grafana
 Jenkins: Use EC2 public IP or Route 53
@@ -177,22 +177,17 @@ Post-deployment, the following outputs are available:
 
 
 **📁 Directory Structure**
-├── modules/
-│   ├── eks-module/             # EKS cluster & node groups
-│   ├── network-module/         # VPC, subnets, DNS
-│   ├── vm-module/              # Jenkins EC2 and installation
-│
-├── k8s/                        # Kubernetes manifests (monitoring, GitOps)
-├── workloads/                 # Sample apps (nginx, echo server)
-├── scripts/                   # Bash scripts for setup
-├── main.tf
-├── outputs.tf
+├── modules
+    ├── eks-module/                        # EKS cluster & node groups
+        ├── k8s/                        # Kubernetes deployments (ArgoCD, monitoring, storage)
+    ├── network-module/                    # VPC, subnets, DNS
+    ├── vm-module/                    # EC2 VM and Jenkins setup
+├── main.tf/                    # Bash scripts (kubectl config, Jenkins install)
+├── outputs.tf/                 # Example applications (nginx, echoserver)
 ├── provider.tf
-├── variables.tf
+├── README.md
 ├── s3-backend.tf
-├── terraform.tfvars
-├── vpc.auto.tfvars
-└── README.md
+├── variables.tf
 
 
 
