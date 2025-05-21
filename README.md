@@ -178,16 +178,27 @@ Post-deployment, the following outputs are available:
 
 **📁 Directory Structure**
 ├── modules
+
     ├── eks-module/                        # EKS cluster & node groups
+
         ├── k8s/                        # Kubernetes deployments (ArgoCD, monitoring, storage)
+
     ├── network-module/                    # VPC, subnets, DNS
+
     ├── vm-module/                    # EC2 VM and Jenkins setup
+
 ├── main.tf/                    # Bash scripts (kubectl config, Jenkins install)
+
 ├── outputs.tf/                 # Example applications (nginx, echoserver)
+
 ├── provider.tf
+
 ├── README.md
+
 ├── s3-backend.tf
+
 ├── variables.tf
+
 
 
 
