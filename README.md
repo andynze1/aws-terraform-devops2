@@ -159,12 +159,15 @@ Once applied, Jenkins will be accessible via the EC2 public IP or a custom Route
 
 
 2.	Plan the Infrastructure
+    ```bash
     terraform plan -out=tfplan
 
 3.	Apply the Plan
+   ```bash
     terraform apply tfplan
 
 4. Configure kubectl
+    ```bash
     bash context-k8s.sh
 
 5.	Access ArgoCD & Grafana
@@ -182,6 +185,7 @@ Check s3-backend.tf for configuration.
 🧼 Cleanup
 
 To destroy everything:
+    ```bash
     terraform destroy
 
 📤 Outputs
