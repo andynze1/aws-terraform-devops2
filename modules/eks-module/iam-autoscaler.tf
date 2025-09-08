@@ -1,28 +1,31 @@
-# IAM Policy and Role
-
-data "aws_iam_policy_document" "eks_cluster_autoscaler_assume_role_policy" {
-  statement {
-    actions = ["sts:AssumeRoleWithWebIdentity"]
-
-    condition {
-      test     = "StringEquals"
-      variable = "oidc.eks.us-east-1.amazonaws.com/id/8F553EEE47D0AB57B050785D3937A975:sub"
-      values   = ["system:serviceaccount:kube-system:cluster-autoscaler"]
-    }
-
-    principals {
-      type        = "Federated"
-      identifiers = ["arn:aws:iam::${var.aws_account_id}:oidc-provider/oidc.eks.us-east-1.amazonaws.com/id/8F553EEE47D0AB57B050785D3937A975"] # ["arn:aws:iam::461086874723:oidc-provider/oidc.eks.us-east-1.amazonaws.com/id/8F553EEE47D0AB57B050785D3937A975"] # 
-    }
-  }
+locals {
+  autoscaler_oidc_hostpath = replace(module.eks.cluster_oidc_issuer_url, "https://", "")
 }
 
 resource "aws_iam_role" "eks_cluster_autoscaler" {
-  assume_role_policy = data.aws_iam_policy_document.eks_cluster_autoscaler_assume_role_policy.json
-  name               = "${var.cluster_name}-cluster-autoscaler-role"
+  count = var.enable_cluster_autoscaler ? 1 : 0
+  name  = "${var.cluster_name}-cluster-autoscaler-role"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Principal = {
+          Federated = module.eks.oidc_provider_arn
+        },
+        Action = "sts:AssumeRoleWithWebIdentity",
+        Condition = {
+          StringEquals = {
+            "${local.autoscaler_oidc_hostpath}:sub" = "system:serviceaccount:kube-system:cluster-autoscaler"
+          }
+        }
+      }
+    ]
+  })
 }
 
 resource "aws_iam_policy" "eks_cluster_autoscaler" {
+  count  = var.enable_cluster_autoscaler ? 1 : 0
   name   = "eks-cluster-autoscaler"
   policy = jsonencode({
     Statement = [{
@@ -43,7 +46,7 @@ resource "aws_iam_policy" "eks_cluster_autoscaler" {
 }
 
 resource "aws_iam_role_policy_attachment" "eks_cluster_autoscaler_attach" {
-  role       = aws_iam_role.eks_cluster_autoscaler.name
-  policy_arn = aws_iam_policy.eks_cluster_autoscaler.arn
+  count      = var.enable_cluster_autoscaler ? 1 : 0
+  role       = aws_iam_role.eks_cluster_autoscaler[0].name
+  policy_arn = aws_iam_policy.eks_cluster_autoscaler[0].arn
 }
-

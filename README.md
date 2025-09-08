@@ -22,7 +22,7 @@ This Terraform project provisions a complete AWS infrastructure stack including:
 - `terraform.tfvars`, `vpc.auto.tfvars`: Parameter values.
 
 ### ☸️ Kubernetes Cluster
-- `eks-cluster.tf`, `eks-securitygroups.tf`, `update-kubeconfig.tf`: Provisions and configures EKS.
+- `eks-cluster.tf`: Provisions and configures EKS (managed node groups, addons).
 - `iam-roles.tf`, `iam-autoscaler.tf`: Creates required IAM roles and bindings.
 
 ### 📊 Monitoring Stack
@@ -39,8 +39,8 @@ This Terraform project provisions a complete AWS infrastructure stack including:
 - `aws-data-sources.tf`: Looks up existing VPCs, subnets, and Route 53 zones.
 
 ### 📡 Sample Applications
-- `echoserver.yaml`: A basic echo service with ALB ingress.
-- `nginx.yaml`: A multi-replica nginx deployment.
+- `examples/k8s/echoserver.yaml`: A basic echo service with ALB ingress.
+- `examples/k8s/nginx.yaml`: A multi-replica nginx deployment.
 - `crd-grafana.yaml`: (Commented out) Custom Resource Definition for Grafana dashboards.
 
 ---
@@ -60,7 +60,7 @@ This Terraform project provisions a complete AWS infrastructure stack including:
 Provisioned using:
 - `eks-cluster.tf`
 - `eks-securitygroups.tf`
-- `update-kubeconfig.tf`
+  (kubectl context managed by Terraform providers; no local-exec)
 
 **Features:**
 - Managed node groups
@@ -179,7 +179,9 @@ Post-deployment, the following outputs are available:
 **📁 Directory Structure**
     ├── modules
         ├── eks-module/                        # EKS cluster & node groups
-            ├── k8s/                        # Kubernetes deployments (ArgoCD, monitoring, storage)
+            ├── (Helm + manifests for addons)
+        ├── examples/
+            ├── k8s/                        # Example Kubernetes deployments (not managed by TF)
         ├── network-module/                    # VPC, subnets, DNS
         ├── vm-module/                    # EC2 VM and Jenkins setup
     ├── main.tf/                    # Bash scripts (kubectl config, Jenkins install)
@@ -203,4 +205,3 @@ To access Nexus Password: docker exec nexus cat /nexus-data/admin.password
 nohup kubectl port-forward service/argo-cd-argocd-server -n argocd 8080:443 > argo-portforward.log 2>&1 &
 
 #######
-

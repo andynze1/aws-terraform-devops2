@@ -3,15 +3,7 @@ locals {
   name        = "${var.business_division}-${var.cluster_name}"
   common_tags = {
     owners      = local.owners  }
-  eks_name = "dml-eks-cluster" # "${local.name}"
+  eks_name = var.cluster_name
 }
 
-# Business Division
-
-
-# Cluster Name
-variable "cluster_name" {
-  type = string
-  default = "eks-cluster"
-}
-
+# Removed duplicate variable declaration of cluster_name

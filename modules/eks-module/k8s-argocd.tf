@@ -1,4 +1,5 @@
 resource "helm_release" "argo_cd" {
+  count            = var.enable_gitops ? 1 : 0
   name             = "argo-cd"
   repository       = "https://argoproj.github.io/argo-helm"
   chart            = "argo-cd"
@@ -33,8 +34,5 @@ resource "helm_release" "argo_cd" {
   depends_on = [
     module.eks,
     kubernetes_namespace.argocd,
-    # aws_lb.argocd,
-    # aws_route53_record.argocd
   ]
 }
-

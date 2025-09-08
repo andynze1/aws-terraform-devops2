@@ -18,10 +18,10 @@ variable "security_group_id" {
   default = "module.network.security_group_id"
 }
 
-variable "aws_instance_id" {
-  description = "AWS Instance ID"
-  type        = string
-}
+# variable "aws_instance_id" {
+#   description = "AWS Instance ID"
+#   type        = string
+# }
 
 variable "network_interface_id" {
   description = "Network Interface ID"

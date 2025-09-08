@@ -27,11 +27,11 @@ variable "vpc_cidr_block" {
   type        = string
   default     = "10.0.0.0/16"
 }
-variable "aws_instance_id" {
-  description = "AWS Instance ID"
-  type        = string
-  default     = "aws_instance.build-server.id"
-}
+# variable "aws_instance_id" {
+#   description = "AWS Instance ID"
+#   type        = string
+#   default     = "aws_instance.build-server.id"
+# }
 
 variable "public_subnet_id" {
   description = "Public subnet ID"
@@ -80,3 +80,8 @@ variable "node_group_max_size" {
   default     = 3
 }
 
+variable "vpc_enable_nat_gateway" {
+  description = "Enable NAT gateway for private subnet egress (turn off to save cost)"
+  type        = bool
+  default     = false
+}

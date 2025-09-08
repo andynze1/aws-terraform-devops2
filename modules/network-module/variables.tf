@@ -31,10 +31,10 @@ variable "security_group_id" {
   default = "aws_security_group.cluster.id"
 }
 
-variable "aws_instance_id" {
-  description = "This defines the Ubuntu Linux ID"
-  type        = string
-}
+# variable "aws_instance_id" {
+#   description = "This defines the Ubuntu Linux ID"
+#   type        = string
+# }
 
 variable "subnet_id" {
   type    = string
@@ -96,7 +96,7 @@ variable "vpc_create_database_subnet_route_table" {
 variable "vpc_enable_nat_gateway" {
   description = "Enable NAT Gateways for Private Subnets Outbound Communication"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "vpc_single_nat_gateway" {
@@ -140,4 +140,3 @@ variable "private_subnet_cidr" {
   description = "CIDR blocks for private subnets"
   type        = list(string)
 }
-

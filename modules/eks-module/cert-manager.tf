@@ -1,5 +1,6 @@
 # Helm Release for Cert-Manager
 resource "helm_release" "cert_manager" {
+  count      = var.enable_cert_manager ? 1 : 0
   name       = "cert-manager"
   namespace  = kubernetes_namespace.monitoring.metadata[0].name
   chart      = "cert-manager"

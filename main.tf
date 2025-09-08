@@ -5,10 +5,11 @@ locals {
 
 ## Network Module
 module "network-module" {
-  source               = "./modules/network-module"
-  aws_region           = var.aws_region
-  aws_instance_id      = module.vm-module.aws_instance_id #var.aws_instance_id
-  public_subnet_id     = var.public_subnet_id             #module.public_subnet_id
+  source     = "./modules/network-module"
+  aws_region = var.aws_region
+  vpc_enable_nat_gateway = var.vpc_enable_nat_gateway
+  # aws_instance_id      = module.vm-module.aws_instance_id #var.aws_instance_id
+  public_subnet_id     = var.public_subnet_id #module.public_subnet_id
   network_interface_id = var.network_interface_id
   vpc_name             = var.vpc_name
   vpc_cidr_block       = var.vpc_cidr_block
@@ -25,7 +26,6 @@ module "vm-module" {
   vpc_id               = module.network-module.vpc_id
   security_group_id    = module.network-module.security_group_id
   network_interface_id = var.network_interface_id
-  aws_instance_id      = var.aws_instance_id
 }
 ### EKS-Cluster Requirement  --- Below 
 ## EKS Module
@@ -36,18 +36,14 @@ module "eks-module" {
   vpc_id                  = module.network-module.vpc_id
   private_subnet_ids      = module.network-module.private_subnet_ids
   public_subnet_ids       = module.network-module.public_subnet_ids
-  security_group_id       = module.network-module.security_group_id
   node_group_desired_size = var.node_group_desired_size
   node_group_min_size     = var.node_group_min_size
   node_group_max_size     = var.node_group_max_size
-  eks_managed_node_group_defaults = {
-    ami_type     = "AL2_x86_64"                         # Default Amazon Linux 2 AMI
-    disk_size    = 10                                   # Default disk size (GB)
-    iam_role_arn = module.eks-module.eks_nodes_role_arn # The IAM role ARN for the node group
-  }
+  use_public_subnets_for_nodes = var.vpc_enable_nat_gateway ? false : true
   # providers = {
   #   kubectl = kubectl
   # }
 }
+
 
 ### EKS-Cluster Requirement  --- Above 

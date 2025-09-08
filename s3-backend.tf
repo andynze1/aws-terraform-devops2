@@ -3,7 +3,7 @@ terraform {
     bucket = "my-terraform-state85"
     key    = "environments2"
     region = "us-east-1"
-    #    dynamodb_table = "ndcc-terraform-state-lock-dynamo"
+    #    dynamodb_table = "zenobi-terraform-eks-state"
     encrypt = true
   }
 }

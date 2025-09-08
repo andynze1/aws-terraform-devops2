@@ -1,17 +1,18 @@
 # Introduce a delay before deploying Grafana
 resource "null_resource" "pre_helm_delay" {
+  count = var.enable_monitoring ? 1 : 0
   provisioner "local-exec" {
     command = "sleep 30"
   }
   depends_on = [
     kubernetes_storage_class_v1.ebs_sc,
-    kubernetes_config_map.grafana-dashboards,
     kubernetes_namespace.monitoring,
   ]
 }
 
 # Deploy Grafana using Helm
 resource "helm_release" "grafana" {
+  count            = var.enable_monitoring ? 1 : 0
   name             = "grafana"
   repository       = "https://grafana.github.io/helm-charts"
   chart            = "grafana"
@@ -149,14 +150,12 @@ resource "helm_release" "grafana" {
   depends_on = [
     kubernetes_namespace.monitoring,
     null_resource.pre_helm_delay,
-    # aws_lb.grafana,
-    # aws_route53_record.grafana,
   ]
 }
 
 # Create ConfigMaps for dashboards using for_each
 resource "kubernetes_config_map" "grafana-dashboards" {
-  for_each = { for dashboard in local.dashboards : dashboard.name => dashboard }
+  for_each = var.enable_monitoring ? { for dashboard in local.dashboards : dashboard.name => dashboard } : {}
 
   metadata {
     name      = each.key
@@ -651,5 +650,4 @@ locals {
 # #     # time_sleep.wait_for_kubernetes,
 # #   ]
 # # }
-
 

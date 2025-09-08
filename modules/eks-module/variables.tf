@@ -6,7 +6,6 @@ variable "aws_region" {
 variable "vpc_id" {
   description = "The ID of the VPC"
   type        = string
-  default = "module.network-module.vpc_id"
 }
 # variable "subnet_ids" {
 #   description = "A list of subnet IDs for the EKS cluster"
@@ -21,26 +20,24 @@ variable "business_division" {
 variable "public_subnet_ids" {
   description = "List of public subnet IDs"
   type        = list(string)
-  default = [ "module.network-module.public_subnet_ids" ]
 }
 
 variable "private_subnet_ids" {
   description = "List of private subnet IDs"
   type        = list(string)
-    default = [ "module.network-module.private_subnet_ids" ]
-
 }
 
-variable "security_group_ids" {
-  description = "List of security group IDs for EKS"
-  type        = list(string)
-  default = "module.network-module.security_group_id"
+variable "cluster_name" {
+  description = "EKS cluster name"
+  type        = string
+  default     = "dml-eks-cluster"
 }
+
 
 variable "node_instance_type" {
   description = "The instance type for the EKS node group."
   type        = string
-  default     = "t2.medium"
+  default     = "t3.medium"
 }
 
 variable "node_capacity_type" {
@@ -117,14 +114,6 @@ variable "grafana_admin_password" {
   default     = "password"
 }
 
-variable "eks_managed_node_group_defaults" {
-  type = object({
-    ami_type  = string
-    disk_size = number
-    iam_role_arn = string  # Ensure this is declared as a string
-  })
-}
-
 variable "iam_username" {
   type = string
   default = "admin"
@@ -133,4 +122,68 @@ variable "iam_username" {
 variable "iam_role_name" {
   type = string
   default = "eks_user_role"
+}
+
+variable "ssh_key_name" {
+  description = "Key pair for EC2 access"
+  type        = string
+  default     = "eks-terraform-key"
+}
+
+# Feature flags to optionally enable components
+variable "enable_monitoring" {
+  description = "Deploy Prometheus and Grafana"
+  type        = bool
+  default     = false
+}
+
+variable "enable_gitops" {
+  description = "Deploy ArgoCD"
+  type        = bool
+  default     = false
+}
+
+variable "enable_cert_manager" {
+  description = "Deploy cert-manager"
+  type        = bool
+  default     = false
+}
+
+variable "enable_aws_load_balancer_controller" {
+  description = "Deploy AWS Load Balancer Controller"
+  type        = bool
+  default     = true
+}
+
+variable "enable_cluster_autoscaler" {
+  description = "Deploy Cluster Autoscaler"
+  type        = bool
+  default     = false
+}
+
+# Backward-compat shim: allow passing node group defaults at root without requiring it
+variable "eks_managed_node_group_defaults" {
+  description = "Optional defaults for EKS managed node groups (unused shim)."
+  type = object({
+    ami_type   = string
+    disk_size  = number
+    iam_role_arn = optional(string)
+  })
+  default = {
+    ami_type  = "AL2_x86_64"
+    disk_size = 10
+  }
+}
+
+# EKS Kubernetes version
+variable "cluster_version" {
+  description = "Kubernetes version for the EKS control plane"
+  type        = string
+  default     = "1.33"
+}
+
+variable "use_public_subnets_for_nodes" {
+  description = "Place node groups in public subnets (set true when NAT is disabled)"
+  type        = bool
+  default     = false
 }

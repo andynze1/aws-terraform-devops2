@@ -92,3 +92,29 @@ resource "aws_route_table_association" "private_association" {
   subnet_id     = element(aws_subnet.private_subnet[*].id, count.index)
   route_table_id = aws_route_table.private_route_table.id
 }
+
+# NAT Gateway to allow private subnets outbound internet access
+resource "aws_eip" "nat" {
+  count  = var.vpc_enable_nat_gateway ? 1 : 0
+  domain = "vpc"
+  tags = {
+    Name = "${local.vpc_name}-nat-eip"
+  }
+}
+
+resource "aws_nat_gateway" "nat" {
+  count         = var.vpc_enable_nat_gateway ? 1 : 0
+  allocation_id = aws_eip.nat[0].id
+  subnet_id     = aws_subnet.public_subnet[0].id
+  tags = {
+    Name = "${local.vpc_name}-nat"
+  }
+  depends_on = [aws_internet_gateway.internet_gateway]
+}
+
+resource "aws_route" "private_default" {
+  count                  = var.vpc_enable_nat_gateway ? 1 : 0
+  route_table_id         = aws_route_table.private_route_table.id
+  destination_cidr_block = "0.0.0.0/0"
+  nat_gateway_id         = aws_nat_gateway.nat[0].id
+}

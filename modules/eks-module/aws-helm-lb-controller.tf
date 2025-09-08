@@ -1,23 +1,34 @@
-# IAM Role for AWS Load Balancer Controller
+locals {
+  oidc_provider_hostpath = replace(module.eks.cluster_oidc_issuer_url, "https://", "")
+}
+
+# IAM Role for AWS Load Balancer Controller (IRSA)
 resource "aws_iam_role" "aws_load_balancer_controller_role" {
-  name = "${var.cluster_name}-eks-load-balancer-controller-role"
+  count = var.enable_aws_load_balancer_controller ? 1 : 0
+  name  = "${var.cluster_name}-aws-load-balancer-controller-role"
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
       {
         Effect = "Allow",
         Principal = {
-          Service = "ec2.amazonaws.com"
+          Federated = module.eks.oidc_provider_arn
         },
-        Action = "sts:AssumeRole"
+        Action = "sts:AssumeRoleWithWebIdentity",
+        Condition = {
+          StringEquals = {
+            "${local.oidc_provider_hostpath}:sub" = "system:serviceaccount:kube-system:aws-load-balancer-controller"
+          }
+        }
       }
     ]
   })
 }
 
 resource "aws_iam_role_policy" "aws_load_balancer_controller_policy" {
+  count  = var.enable_aws_load_balancer_controller ? 1 : 0
   name   = "${var.cluster_name}-eks-load-balancer-controller-policy"
-  role   = aws_iam_role.aws_load_balancer_controller_role.id
+  role   = aws_iam_role.aws_load_balancer_controller_role[0].id
 
   policy = jsonencode({
     Version = "2012-10-17",
@@ -55,6 +66,7 @@ resource "aws_iam_role_policy" "aws_load_balancer_controller_policy" {
 
 # Helm release for AWS Load Balancer Controller
 resource "helm_release" "aws_load_balancer_controller" {
+  count      = var.enable_aws_load_balancer_controller ? 1 : 0
   name       = "aws-load-balancer-controller"
   repository = "https://aws.github.io/eks-charts"
   chart      = "aws-load-balancer-controller"
@@ -70,11 +82,11 @@ resource "helm_release" "aws_load_balancer_controller" {
   }
   set {
     name  = "serviceAccount.name"
-    value = "${var.cluster_name}-aws-load-balancer-controller"
+    value = "aws-load-balancer-controller"
   }
   set {
     name  = "serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
-    value = aws_iam_role.aws_load_balancer_controller_role.arn
+    value = aws_iam_role.aws_load_balancer_controller_role[0].arn
   }
   depends_on = [module.eks]
 }

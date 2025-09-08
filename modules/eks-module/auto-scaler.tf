@@ -1,5 +1,6 @@
 # EKS Cluster Autoscaler Helm Release
 resource "helm_release" "cluster_autoscaler" {
+  count      = var.enable_cluster_autoscaler ? 1 : 0
   name       = "${var.cluster_name}-cluster-autoscaler"
   repository = "https://kubernetes.github.io/autoscaler"
   chart      = "cluster-autoscaler"
@@ -11,7 +12,7 @@ resource "helm_release" "cluster_autoscaler" {
         serviceAccount = {
           name = "cluster-autoscaler"
           annotations = {
-            "eks.amazonaws.com/role-arn" = aws_iam_role.eks_cluster_autoscaler.arn
+            "eks.amazonaws.com/role-arn" = aws_iam_role.eks_cluster_autoscaler[0].arn
           }
         }
       }
