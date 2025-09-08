@@ -187,3 +187,9 @@ variable "use_public_subnets_for_nodes" {
   type        = bool
   default     = false
 }
+
+variable "enable_kubeconfig_update" {
+  description = "If true, run a local-exec to update kubeconfig and wait for API readiness."
+  type        = bool
+  default     = false
+}

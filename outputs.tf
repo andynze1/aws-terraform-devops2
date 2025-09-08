@@ -8,20 +8,7 @@
 #   value       = module.eks-module.aws_load_balancer_controller_role_arn
 # }
 
-output "prometheus_helm_metadata" {
-  description = "Metadata Block outlining status of the deployed release."
-  value       = module.eks-module.prometheus_helm_metadata
-}
-
-output "grafana_helm_metadata" {
-  description = "Metadata Block outlining status of the deployed release."
-  value       = module.eks-module.grafana_helm_metadata
-}
-
-output "argo_cd_helm_metadata" {
-  description = "Metadata Block outlining status of the deployed release."
-  value       = module.eks-module.argo_cd_helm_metadata
-}
+## App stack outputs (monitoring/argocd) moved to their own stacks
 ## EKS-Cluster Requirement  --- Above 
 
 output "oidc_issuer_url" {
@@ -42,6 +29,31 @@ output "node_subnet_type" {
 output "node_subnet_ids" {
   description = "The subnet IDs used by the node group"
   value       = module.eks-module.node_subnet_ids
+}
+
+output "eks_cluster_name" {
+  description = "EKS cluster name"
+  value       = module.eks-module.eks_cluster_name
+}
+
+output "vpc_id" {
+  description = "VPC ID"
+  value       = module.vpc-module.vpc_id
+}
+
+output "public_subnet_ids" {
+  description = "Public subnet IDs"
+  value       = module.vpc-module.public_subnet_ids
+}
+
+output "private_subnet_ids" {
+  description = "Private subnet IDs"
+  value       = module.vpc-module.private_subnet_ids
+}
+
+output "security_group_id" {
+  description = "Default security group ID"
+  value       = module.vpc-module.security_group_id
 }
 
 

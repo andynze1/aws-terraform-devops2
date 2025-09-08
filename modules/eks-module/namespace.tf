@@ -1,16 +1,5 @@
 # Resource: k8s monitoring namespace creation
-resource "kubernetes_namespace" "monitoring" {
-  metadata {
-    name = "monitoring"
-  }
-}
-
-# Resource: k8s argocd namespace creation
-resource "kubernetes_namespace" "argocd" {
-  metadata {
-    name = "argocd"
-  }
-}
+// Monitoring and ArgoCD namespaces moved to dedicated modules
 
 # Resource: k8s dev namespace creation
 resource "kubernetes_namespace_v1" "k8s_dev" {

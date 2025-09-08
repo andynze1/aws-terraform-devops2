@@ -3,12 +3,14 @@ locals {
   env = terraform.workspace
 }
 
-## Network Module
-module "network-module" {
-  source     = "./modules/network-module"
+## VPC Module
+module "vpc-module" {
+  source     = "./modules/vpc-module"
   aws_region = var.aws_region
   vpc_enable_nat_gateway = var.vpc_enable_nat_gateway
-  # aws_instance_id      = module.vm-module.aws_instance_id #var.aws_instance_id
+  allow_jenkins_http     = true   # Training: open Jenkins UI on port 8080
+  jenkins_http_cidr      = "0.0.0.0/0" # Consider restricting to your IP/32
+  # aws_instance_id      = module.jenkins-module.aws_instance_id #var.aws_instance_id
   public_subnet_id     = var.public_subnet_id #module.public_subnet_id
   network_interface_id = var.network_interface_id
   vpc_name             = var.vpc_name
@@ -18,24 +20,15 @@ module "network-module" {
   private_subnet_cidr  = var.private_subnet_cidr # ["10.0.3.0/24", "10.0.4.0/24"]
 }
 
-## VM Module
-module "vm-module" {
-  source               = "./modules/vm-module"
-  public_subnet_id     = module.network-module.public_subnet_ids[0]  # Get the first subnet
-  private_subnet_id    = module.network-module.private_subnet_ids[0] # Get the first private subnet
-  vpc_id               = module.network-module.vpc_id
-  security_group_id    = module.network-module.security_group_id
-  network_interface_id = var.network_interface_id
-}
 ### EKS-Cluster Requirement  --- Below 
 ## EKS Module
 module "eks-module" {
   source                  = "./modules/eks-module"
   aws_region              = var.aws_region
   cluster_name            = var.cluster_name
-  vpc_id                  = module.network-module.vpc_id
-  private_subnet_ids      = module.network-module.private_subnet_ids
-  public_subnet_ids       = module.network-module.public_subnet_ids
+  vpc_id                  = module.vpc-module.vpc_id
+  private_subnet_ids      = module.vpc-module.private_subnet_ids
+  public_subnet_ids       = module.vpc-module.public_subnet_ids
   node_group_desired_size = var.node_group_desired_size
   node_group_min_size     = var.node_group_min_size
   node_group_max_size     = var.node_group_max_size
@@ -47,3 +40,5 @@ module "eks-module" {
 
 
 ### EKS-Cluster Requirement  --- Above 
+
+## Note: Jenkins, ArgoCD, and Monitoring moved to separate stacks under stacks/.

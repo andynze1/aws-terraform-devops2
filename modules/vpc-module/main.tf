@@ -93,6 +93,17 @@ resource "aws_route_table_association" "private_association" {
   route_table_id = aws_route_table.private_route_table.id
 }
 
+# Manage the automatically-created main route table for this VPC so it
+# participates in Terraform's destroy ordering.
+resource "aws_default_route_table" "main" {
+  default_route_table_id = aws_vpc.vpc.default_route_table_id
+
+  # No explicit routes here; public/private RTs above are used for subnets
+  tags = {
+    Name = "${local.vpc_name}-main-rt"
+  }
+}
+
 # NAT Gateway to allow private subnets outbound internet access
 resource "aws_eip" "nat" {
   count  = var.vpc_enable_nat_gateway ? 1 : 0
@@ -118,3 +129,35 @@ resource "aws_route" "private_default" {
   destination_cidr_block = "0.0.0.0/0"
   nat_gateway_id         = aws_nat_gateway.nat[0].id
 }
+
+# Manage the default security group so Terraform can order deletion cleanly
+resource "aws_default_security_group" "default" {
+  vpc_id = aws_vpc.vpc.id
+
+  # Keep SSH/HTTP(S) rules on the dedicated SG created above; default SG stays minimal
+  ingress = []
+  egress = [
+    {
+      from_port   = 0
+      to_port     = 0
+      protocol    = "-1"
+      cidr_blocks = ["0.0.0.0/0"]
+      ipv6_cidr_blocks = []
+      prefix_list_ids  = []
+      security_groups  = []
+      description      = null
+      self             = false
+    }
+  ]
+  tags = {
+    Name = "${local.vpc_name}-default-sg"
+  }
+}
+
+# # (Optional) If a custom DHCP options set is currently associated to the VPC,
+# # manage the association so Terraform can remove it before deleting the VPC.
+# resource "aws_vpc_dhcp_options_association" "dhcp_options" {
+#   count           = var.dhcp_options_id != "" ? 1 : 0
+#   vpc_id          = aws_vpc.vpc.id
+#   dhcp_options_id = var.dhcp_options_id
+# }

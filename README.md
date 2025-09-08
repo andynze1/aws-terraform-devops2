@@ -2,46 +2,47 @@
 
 This Terraform project provisions a complete AWS infrastructure stack including:
 
-- 🔧 **Amazon EKS cluster**
-- 🚀 **GitOps with ArgoCD**
-- 📊 **Monitoring with Prometheus & Grafana**
-- ⚙️ **Jenkins deployment on EC2**
-- 🗂️ **StorageClasses & DNS**
-- 🔐 **IAM roles & autoscaler**
-- 🌍 **Route 53 DNS integration**
-- 🌐 **VPC, subnets, and security groups**
-- 🧪 **Sample apps (NGINX, Echo Server)**
+- 🔧 Amazon EKS cluster (managed node groups, addons)
+- 🚀 Optional GitOps with ArgoCD
+- 📊 Optional Monitoring with Prometheus & Grafana
+- ⚙️ Optional Jenkins deployment on EC2
+- 🗂️ StorageClasses (EBS CSI)
+- 🔐 IAM via IRSA (ALB Controller, Autoscaler)
+- 🌐 VPC, subnets, and security groups (NAT toggle)
+- 🧪 Example apps (NGINX, Echo Server)
 
 ---
 
 ## 📦 Components
 
-### ✅ Core Modules
-- `main.tf`, `variables.tf`, `outputs.tf`: Core Terraform infrastructure logic.
-- `provider.tf`, `s3-backend.tf`: Cloud provider and backend configuration (S3 + DynamoDB).
-- `terraform.tfvars`, `vpc.auto.tfvars`: Parameter values.
+### ✅ Core (root) stack
+- `main.tf`, `variables.tf`, `outputs.tf`: VPC + EKS only.
+- `provider.tf`, `s3-backend.tf`: Cloud provider + remote backend (S3).
+- Deploys a VPC, subnets, optional NAT, and an EKS cluster with managed addons.
 
 ### ☸️ Kubernetes Cluster
-- `eks-cluster.tf`: Provisions and configures EKS (managed node groups, addons).
-- `iam-roles.tf`, `iam-autoscaler.tf`: Creates required IAM roles and bindings.
+- `modules/eks-module/main.tf`: EKS cluster and node groups.
+- `modules/eks-module/aws-helm-lb-controller.tf`: IRSA + Helm for AWS LB Controller (optional).
+- `modules/eks-module/iam-autoscaler.tf`: IRSA for Cluster Autoscaler (optional).
+- `modules/eks-module/kubeconfig-update.tf`: Optional local kubeconfig update and API readiness wait.
 
-### 📊 Monitoring Stack
-- `k8s-prometheus.tf`, `k8s-grafana.tf`: Deploys Prometheus & Grafana via Helm.
-- `grafana-dashboard.yaml`, `grafana-values.yaml`: Custom dashboards and config.
-- `prometheus-stoageclass.yaml`, `storage-class.yaml`: Persistent storage using AWS EBS.
+### 📊 Monitoring Stack (independent)
+- Folder: `stacks/monitoring`
+- Module: `modules/monitoring-module`
+- Installs Prometheus & Grafana via Helm. Grafana is exposed as `ClusterIP` by default (no external LB).
 
-### 🚀 GitOps with ArgoCD
-- `k8s-argocd.tf`, `argocd.json`: Installs ArgoCD using Helm and sets up the namespace.
+### 🚀 GitOps with ArgoCD (independent)
+- Folder: `stacks/argocd`
+- Module: `modules/argocd-module`
+- ArgoCD server is exposed via `Service type: LoadBalancer` and outputs the external hostname/URL.
 
-### 🌐 Networking & DNS
-- `namespace.tf`: Defines `monitoring`, `argocd`, and other namespaces.
-- `route-53-dns-records.tf`: Creates DNS records in Route 53.
-- `aws-data-sources.tf`: Looks up existing VPCs, subnets, and Route 53 zones.
+### 🌐 Networking
+- `modules/eks-module/namespace.tf`: Defines the `dev` namespace.
+- `modules/vpc-module/main.tf`: VPC, subnets, routes, NAT (gated), SGs.
 
-### 📡 Sample Applications
-- `examples/k8s/echoserver.yaml`: A basic echo service with ALB ingress.
-- `examples/k8s/nginx.yaml`: A multi-replica nginx deployment.
-- `crd-grafana.yaml`: (Commented out) Custom Resource Definition for Grafana dashboards.
+### 📡 Example Applications
+- `examples/k8s/echoserver.yaml`: Basic echo service with ALB ingress.
+- `examples/k8s/nginx.yaml`: Multi-replica nginx deployment.
 
 ---
 
@@ -57,16 +58,14 @@ This Terraform project provisions a complete AWS infrastructure stack including:
 
 ## ☸️ Kubernetes Cluster with EKS
 
-Provisioned using:
-- `eks-cluster.tf`
-- `eks-securitygroups.tf`
-  (kubectl context managed by Terraform providers; no local-exec)
+Provisioned with `terraform-aws-modules/eks` in `modules/eks-module/main.tf`.
 
-**Features:**
-- Managed node groups
-- Custom security groups
-- IRSA for Kubernetes pods
-- `context-k8s.sh` to automatically update kubeconfig
+Highlights:
+- Managed node groups with configurable size and instance types.
+- Managed Addons: vpc-cni, coredns, kube-proxy, aws-ebs-csi-driver.
+- IRSA for AWS LB Controller and (optionally) Cluster Autoscaler.
+- Default Kubernetes version: `1.33` (override via `cluster_version`).
+- Optional local kubeconfig update: set `enable_kubeconfig_update = true` in the root module call to run `aws eks update-kubeconfig` and wait for API readiness.
 
 ---
 
@@ -90,17 +89,11 @@ Jenkins is installed on an EC2 instance provisioned via Terraform and bootstrapp
   ```bash
   docker exec nexus cat /nexus-data/admin.password
 
-📊 Monitoring Stack
+📊 Monitoring Stack (optional)
 
-Includes:
-	•	Prometheus: Cluster metrics and scraping configuration.
-	•	Grafana: Dashboards with sidecar-enabled dynamic loading.
-	•	Uses:
-	•	grafana-values.yaml
-	•	grafana-dashboard.yaml
-	•	Storage class via prometheus-stoageclass.yaml
-
-Access Grafana via ingress and authenticate with the credentials defined in the values file.
+Enable with `enable_monitoring = true`.
+- Prometheus + Grafana installed via Helm.
+- Grafana dashboards loaded via ConfigMaps in `monitoring` namespace.
 
 ⸻
 
@@ -115,9 +108,10 @@ NGINX
 
 ⸻
 
-🌐 Networking & DNS
-	•	VPC, subnets, and route tables defined via network-module.
-	•	DNS entries for ArgoCD, Jenkins, and Grafana created in route-53-dns-records.tf.
+🌐 Networking
+	•	VPC, subnets, route tables, and optional NAT via `modules/vpc-module`.
+	•	Cost-saving: `vpc_enable_nat_gateway = false` by default (no NAT charges).
+	•	Training-friendly: when NAT is disabled, nodes are placed in public subnets automatically.
 
 ⸻
 
@@ -132,76 +126,81 @@ NGINX
 	•	iam-roles.tf: For EKS nodes and workloads.
 	•	iam-autoscaler.tf: Cluster Autoscaler support.
 
-**🚀 Deployment Steps**
-1.	Initialize Terraform
-    ```bash
-    terraform init
+## 🚀 How to Apply (by stack)
 
-2.	Plan the Infrastructure
-    ```bash
-    terraform plan -out=tfplan
+Root (VPC + EKS)
+- cd .
+- terraform init -upgrade
+- terraform apply
+- Optional: add to `module "eks-module"` in `main.tf`:
+  - `enable_kubeconfig_update = true`
 
-3.	Apply the Plan
-    ```bash
-    terraform apply tfplan
+ArgoCD (independent)
+- cd stacks/argocd
+- terraform init
+- terraform apply
+- Outputs: `argocd_url`, `argocd_lb_hostname`
 
-4.	Configure kubectl
-    ```bash
-    bash context-k8s.sh
+Monitoring (Prometheus + Grafana, independent)
+- cd stacks/monitoring
+- terraform init
+- terraform apply
+- Grafana is `ClusterIP` (no LB). Port-forward locally:
+  - `kubectl -n monitoring port-forward svc/grafana 3000:80`
+  - Open http://localhost:3000
 
-5.	Destroy Infrastructure (if needed)
-    ```bash
-    terraform destroy
-
-6. Access Jenkins & Grafana
-Jenkins: Use EC2 public IP or Route 53
-Grafana: Via ALB ingress
+Jenkins (independent)
+- cd stacks/jenkins
+- terraform init
+- terraform apply
+- Outputs: `public_ip`
 
 
 🔐 Remote State Management
 
-Terraform state is managed remotely using:
-	•	S3 bucket for storing state files
-	•	DynamoDB for state locking
-
-Configuration: s3-backend.tf
+Remote state via S3 backend (see `s3-backend.tf`). For workspaces, prefer workspace-aware keys and DynamoDB locking via `-backend-config` at `terraform init` time.
 
 ⸻
 
-📤 Outputs
+📤 Outputs (root)
 
-Post-deployment, the following outputs are available:
-	•	EKS cluster name and kubeconfig setup
-	•	ArgoCD, Jenkins, and Grafana URLs
-	•	IAM role ARNs and resource IDs
+Key outputs:
+- `eks_cluster_name`, `eks_cluster_endpoint`, `eks_cluster_id`
+- `oidc_issuer_url` (for IRSA)
+- `aws_load_balancer_controller_role_arn` (when enabled)
+- `node_subnet_type` and `node_subnet_ids` (public vs private and the chosen IDs)
 
 
 **📁 Directory Structure**
-    ├── modules
-        ├── eks-module/                        # EKS cluster & node groups
-            ├── (Helm + manifests for addons)
-        ├── examples/
-            ├── k8s/                        # Example Kubernetes deployments (not managed by TF)
-        ├── network-module/                    # VPC, subnets, DNS
-        ├── vm-module/                    # EC2 VM and Jenkins setup
-    ├── main.tf/                    # Bash scripts (kubectl config, Jenkins install)
-    ├── outputs.tf/                 # Example applications (nginx, echoserver)
-    ├── provider.tf
-    ├── README.md
-    ├── s3-backend.tf
+    ├── modules/
+    │   ├── eks-module/                 # EKS cluster & addons (Helm IRSA, monitoring, gitops)
+    │   ├── vpc-module/                 # VPC, subnets, routes, SGs (NAT toggle)
+    │   └── jenkins-module/             # Optional EC2/Jenkins
+    ├── examples/
+    │   └── k8s/                        # Example Kubernetes manifests (not managed by TF)
+    ├── main.tf                   # Root stack: VPC + EKS only
     ├── variables.tf
+    ├── outputs.tf
+    ├── provider.tf
+    ├── s3-backend.tf
+    ├── stacks/
+    │   ├── argocd/               # Independent ArgoCD stack
+    │   ├── monitoring/           # Independent Monitoring stack
+    │   └── jenkins/              # Independent Jenkins stack
+    └── README.md
 
 
 
 
 Terraform VPC and EC2 Module for Workspaces Prod and Stage Environment. With Statefile stored securely in AWS S3. 
 
-🚀 GitOps with ArgoCD
-	•	Deployed to argocd namespace.
-	•	Accessible via ALB/Ingress configured in k8s-argocd.tf.
-	•	Port-forward locally:
+### Feature Flags (EKS module)
+- `enable_aws_load_balancer_controller` (default: true)
+- `enable_cluster_autoscaler` (default: false)
+- `enable_kubeconfig_update` (default: false)
 
-To access Nexus Password: docker exec nexus cat /nexus-data/admin.password
-nohup kubectl port-forward service/argo-cd-argocd-server -n argocd 8080:443 > argo-portforward.log 2>&1 &
-
-#######
+### Cost-Saving & Node Placement
+- `vpc_enable_nat_gateway` (root var, default: false): disables NAT to avoid hourly charges.
+- When NAT is disabled, nodes automatically use public subnets for internet access.
+- To force placement, set `use_public_subnets_for_nodes` in the EKS module call.
+- Monitoring uses `ClusterIP` for Grafana to avoid extra LBs.

@@ -42,12 +42,13 @@ variable "public_subnet_id" {
 variable "network_interface_id" {
   description = "Network Interface ID"
   type        = string
-  default     = "module.network-module.network_interface_id"
+  default     = ""
 }
 
 variable "cluster_name" {
-  type    = string
-  default = "dml"
+  description = "EKS Cluster name"
+  type        = string
+  default     = "dml-project"
 }
 
 variable "vpc_id" {
@@ -82,6 +83,18 @@ variable "node_group_max_size" {
 
 variable "vpc_enable_nat_gateway" {
   description = "Enable NAT gateway for private subnet egress (turn off to save cost)"
+  type        = bool
+  default     = false
+}
+
+variable "enable_gitops" {
+  description = "Deploy ArgoCD module"
+  type        = bool
+  default     = false
+}
+
+variable "enable_monitoring" {
+  description = "Deploy Monitoring (Prometheus & Grafana) module"
   type        = bool
   default     = false
 }

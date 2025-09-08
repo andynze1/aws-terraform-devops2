@@ -13,8 +13,9 @@ module "eks" {
   enable_cluster_creator_admin_permissions = true
 
   eks_managed_node_group_defaults = {
-    ami_type  = "AL2_x86_64"
-    disk_size = 10
+    # AL2 is unsupported for Kubernetes >= 1.33; use AL2023
+    ami_type  = "AL2023_x86_64_STANDARD"
+    disk_size = 30
   }
 
   enable_irsa = true

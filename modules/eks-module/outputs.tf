@@ -32,20 +32,7 @@ output "oidc_issuer_url" {
   value = module.eks.cluster_oidc_issuer_url
 }
 
-output "prometheus_helm_metadata" {
-  description = "Metadata Block outlining status of the deployed release."
-  value       = var.enable_monitoring ? helm_release.prometheus[0].status : null
-}
-
-output "grafana_helm_metadata" {
-  description = "Metadata Block outlining status of the deployed release."
-  value       = var.enable_monitoring ? helm_release.grafana[0].metadata : null
-}
-
-output "argo_cd_helm_metadata" {
-  description = "Metadata Block outlining status of the deployed release."
-  value       = var.enable_gitops ? helm_release.argo_cd[0].metadata : null
-}
+// Monitoring and ArgoCD outputs moved to dedicated modules
 
 # Which subnets are used for the node group
 output "node_subnet_type" {

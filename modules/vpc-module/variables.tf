@@ -99,6 +99,24 @@ variable "vpc_enable_nat_gateway" {
   default     = false
 }
 
+variable "allow_jenkins_http" {
+  description = "Allow inbound HTTP to Jenkins (port 8080) on the VPC security group"
+  type        = bool
+  default     = false
+}
+
+variable "jenkins_http_cidr" {
+  description = "CIDR allowed for Jenkins UI (port 8080)"
+  type        = string
+  default     = "0.0.0.0/0"
+}
+
+variable "dhcp_options_id" {
+  description = "Existing DHCP options set ID associated to this VPC (optional, used for import/destroy)."
+  type        = string
+  default     = ""
+}
+
 variable "vpc_single_nat_gateway" {
   description = "Enable only single NAT Gateway in one Availability Zone to save costs during our demos"
   type        = bool
